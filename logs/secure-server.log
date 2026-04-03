@@ -1,0 +1,21 @@
+🔒 权限控制服务器启动成功
+📡 访问地址: http://localhost:3002
+🌐 公网访问: http://119.45.238.161:3002
+👤 测试账户: admin@ecommerce-ai-agents.org / Admin123!
+node:internal/errors:540
+      throw error;
+      ^
+
+TypeError [ERR_INVALID_CHAR]: Invalid character in header content ["Location"]
+    at storeHeader (node:_http_outgoing:628:5)
+    at processHeader (node:_http_outgoing:623:3)
+    at ServerResponse._storeHeader (node:_http_outgoing:492:11)
+    at ServerResponse.writeHead (node:_http_server:439:8)
+    at Server.<anonymous> (/opt/ecommerce-ai-agents/bin/secure-server.js:144:17)
+    at Server.emit (node:events:519:28)
+    at parserOnIncoming (node:_http_server:1186:12)
+    at HTTPParser.parserOnHeadersComplete (node:_http_common:125:17) {
+  code: 'ERR_INVALID_CHAR'
+}
+
+Node.js v22.22.1

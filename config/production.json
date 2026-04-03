@@ -1,0 +1,78 @@
+{
+  "server": {
+    "port": 3000,
+    "host": "0.0.0.0",
+    "environment": "production",
+    "name": "电商AI Agents生产环境"
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "/opt/ecommerce-ai-agents/data/sqlite/ecommerce.db",
+    "backup_dir": "/opt/ecommerce-ai-agents/backup"
+  },
+  "security": {
+    "jwt_secret": "change-this-to-a-secure-random-string-in-production",
+    "cors_origins": ["*"],
+    "rate_limit": {
+      "windowMs": 60000,
+      "max": 100
+    }
+  },
+  "email": {
+    "enabled": true,
+    "provider": "smtp",
+    "smtp": {
+      "host": "smtp.gmail.com",
+      "port": 587,
+      "secure": false
+    },
+    "from": {
+      "name": "电商AI Agents系统",
+      "email": "noreply@ecommerce-ai-agents.org"
+    },
+    "templates": {
+      "order_confirmation": true,
+      "shipping_notification": true,
+      "password_reset": true,
+      "welcome_email": true,
+      "marketing_promotion": true
+    }
+  },
+  "payment": {
+    "alipay": {
+      "enabled": false,
+      "app_id": "your-app-id",
+      "gateway": "https://openapi.alipay.com/gateway.do"
+    },
+    "wechat": {
+      "enabled": false,
+      "app_id": "your-app-id",
+      "mch_id": "your-mch-id"
+    },
+    "test": {
+      "enabled": true,
+      "success_rate": 1.0
+    }
+  },
+  "features": {
+    "user_authentication": true,
+    "product_management": true,
+    "order_management": true,
+    "ai_chat": true,
+    "payment_processing": true,
+    "email_notifications": true,
+    "admin_dashboard": true,
+    "coupon_system": true
+  },
+  "logging": {
+    "level": "info",
+    "file": "/opt/ecommerce-ai-agents/logs/server.log",
+    "max_size": "10m",
+    "max_files": 5
+  },
+  "monitoring": {
+    "health_check_interval": 30000,
+    "memory_threshold": 80,
+    "disk_threshold": 85
+  }
+}
