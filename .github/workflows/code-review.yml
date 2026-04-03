@@ -1,0 +1,148 @@
+name: Code Review Automation
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+  push:
+    branches: [ main ]
+  schedule:
+    - cron: '0 0 * * 0'  # 每周日运行一次
+
+jobs:
+  security-review:
+    name: Security Review
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Run security scan
+      run: |
+        echo "🔒 Running security review..."
+        ./scripts/automated-code-review.sh . --security --report
+        
+    - name: Upload security report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-review-report
+        path: /tmp/code-review-*/report.html
+        
+    - name: Notify on critical issues
+      if: failure()
+      run: |
+        echo "❌ Critical security issues found!"
+        echo "Please check the security review report."
+
+  code-quality:
+    name: Code Quality Review
+    runs-on: ubuntu-latest
+    needs: security-review
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run ESLint
+      run: npx eslint src/ --max-warnings=0
+      
+    - name: Run code quality review
+      run: |
+        echo "📝 Running code quality review..."
+        ./scripts/automated-code-review.sh . --quality --report
+        
+    - name: Upload quality report
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: quality-review-report
+        path: /tmp/code-review-*/report.html
+
+  test-coverage:
+    name: Test Coverage Review
+    runs-on: ubuntu-latest
+    needs: code-quality
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run tests
+      run: npm test -- --coverage
+      
+    - name: Upload test coverage
+      uses: codecov/codecov-action@v3
+      
+    - name: Run test review
+      run: |
+        echo "🧪 Running test review..."
+        ./scripts/automated-code-review.sh . --report | grep -i "test"
+
+  full-review:
+    name: Full Code Review
+    runs-on: ubuntu-latest
+    needs: [security-review, code-quality, test-coverage]
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Run full review
+      run: |
+        echo "🔍 Running full code review..."
+        ./scripts/automated-code-review.sh . --full --report
+        
+    - name: Generate summary report
+      run: |
+        echo "# 📊 Code Review Summary" > review-summary.md
+        echo "" >> review-summary.md
+        echo "## 🎯 Review Results" >> review-summary.md
+        echo "" >> review-summary.md
+        echo "### Security Review: ${{ needs.security-review.result }}" >> review-summary.md
+        echo "### Quality Review: ${{ needs.code-quality.result }}" >> review-summary.md
+        echo "### Test Review: ${{ needs.test-coverage.result }}" >> review-summary.md
+        echo "" >> review-summary.md
+        echo "## 📈 Recommendations" >> review-summary.md
+        echo "" >> review-summary.md
+        echo "1. ✅ All checks passed" >> review-summary.md
+        echo "2. 🔄 Ready for merge" >> review-summary.md
+        
+    - name: Upload full report
+      uses: actions/upload-artifact@v3
+      with:
+        name: full-review-report
+        path: |
+          /tmp/code-review-*/report.html
+          review-summary.md
+        
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v6
+      with:
+        script: |
+          const fs = require('fs');
+          const summary = fs.readFileSync('review-summary.md', 'utf8');
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: summary
+          });
